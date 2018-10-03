@@ -5,6 +5,8 @@ class Zoomer extends Component {
     constructor(props) {
         super(props);
 
+        this.image = null;  // the image DOM element
+
         // User defineable settings- these can be passed in via component props
         let defaultSettings = {
             backgroundColor: "#ccc", // the background color of the canvas
@@ -23,10 +25,10 @@ class Zoomer extends Component {
      */
     bindEventListeners() {
         this.canvas.addEventListener("mousemove", (e) => {
-            this.handleMove(e);
+            this.handleMouseMove(e);
         })
         this.canvas.addEventListener("touchmove", (e) => {
-            this.handleMove(e);
+            this.handleTouchMove(e);
         })
 
         this.canvas.addEventListener("mousedown", (e) => {
@@ -52,6 +54,56 @@ class Zoomer extends Component {
         }
     }
 
+    calculateDragMove(x, y) {
+        // if the user is dragging the canvas, just move the canvas contents around based on the direction and length of the drag
+        if (this.isDragging) {
+            this.dragEnd = [x, y];
+            this.calculateMovementCoords(x, y);
+            this.drawMoveStart = [x, y];
+            this.initial_load = false;
+        }
+    }
+
+    calculateMovementCoords(x, y) {
+        var mouseX = Math.round(this.startX + (this.dragStart[0] - this.dragEnd[0])/this.scale);
+		var mouseY = Math.round(this.startY + (this.dragStart[1] - this.dragEnd[1])/this.scale);
+		
+		var moveX = true;
+		var moveY = true;
+
+		if (mouseX < -this.originx - this.canvas.width/this.scale / 2) {
+			mouseX = -this.originx - this.canvas.width/this.scale / 2;
+			moveX = false;
+		}
+		
+		if (mouseX > -this.originx + (this.image_width - this.canvas.width/this.scale / 2)) {
+			mouseX = -this.originx + (this.image_width - this.canvas.width/this.scale / 2);
+			moveX = false;
+		}
+		
+		if (mouseY < -this.originy) {
+			mouseY = -this.originy;
+			moveY = false;
+		}
+		
+		if (mouseY > -this.originy + this.image_height - this.canvas.height / this.scale) {
+			mouseY = -this.originy + this.image_height - this.canvas.height / this.scale;
+			moveY = false;
+		}
+		
+		this.mouseX = mouseX;
+		this.mouseY = mouseY;
+		
+		if (this.zoomed) {
+			this.zoomed = false;
+		}
+
+    }
+
+    canvasIsWiderThanImage() {
+        return this.canvas.width > this.image_width;
+    }
+
     /**
      * Clear the canvas
      */
@@ -61,60 +113,105 @@ class Zoomer extends Component {
     }
 
     componentDidMount() {
-        this.initialize();
+        this.initializeImage();
     }
 
-    handleMove(e) {
+    handleTouchMove(e) {
         console.log("move event");
+        console.log(e)
+        this.userHasInteracted = true;
 
         e.preventDefault();
+
         // is the user zooming? If there are 2 fingers/touch points on the screen, this is a pinch zoom
-        if (e.originalEvent.touches && e.originalEvent.touches.length == 2) {
+        if (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches.length === 2) {
 			// if the user just put their fingers down and started dragging, record the x and y coordinates of the starting position of the pinch 
 			if (this.fingers_down) {
-				this.finger_1_start = { x: e.originalEvent.touches[0].clientX, y: e.originalEvent.touches[0].clientY };
-				this.finger_2_start = { x: e.originalEvent.touches[1].clientX, y: e.originalEvent.touches[1].clientY };
+				this.finger_1.start = { x: e.originalEvent.touches[0].clientX, y: e.originalEvent.touches[0].clientY };
+				this.finger_2.start = { x: e.originalEvent.touches[1].clientX, y: e.originalEvent.touches[1].clientY };
 				this.origin = { x: (e.originalEvent.touches[0].clientX + e.originalEvent.touches[1].clientX) / 2, y: (e.originalEvent.touches[0].clientY + e.originalEvent.touches[1].clientY) / 2 }
 				this.fingers_down = false;
 			} else { // if the user is continuing a pinch, record the *current* end coordinates of the pinch and set the new start coordinates to the previous end position
-				if (this.finger_1_end) this.finger_1_start = this.finger_1_end;
-				if (this.finger_2_end) this.finger_2_start = this.finger_2_end;
-				this.finger_1_end = { x: e.originalEvent.touches[0].clientX, y: e.originalEvent.touches[0].clientY };
-				this.finger_2_end = { x: e.originalEvent.touches[1].clientX, y: e.originalEvent.touches[1].clientY };
+				if (this.finger_1.end) this.finger_1.start = this.finger_1.end;
+				if (this.finger_2.end) this.finger_2.start = this.finger_2.end;
+				this.finger_1.end = { x: e.originalEvent.touches[0].clientX, y: e.originalEvent.touches[0].clientY };
+				this.finger_2.end = { x: e.originalEvent.touches[1].clientX, y: e.originalEvent.touches[1].clientY };
 			}
 			
 			// use the start and end points to calculate the pinch zoom ratio 
-			this.calculatePinchZoom();
-		} else { // is the user dragging?
-			var x = e.clientX ? e.clientX : e.originalEvent.targetTouches[0].pageX;
-			var y = e.clientY ? e.clientY : e.originalEvent.targetTouches[0].pageY;
-			
-			// if the user is dragging the canvas, just move the canvas contents around based on the direction and length of the drag
-			if (this.isDragging) {
-				this.dragEnd = [x, y];
-				this.calculateMovementCoords(x, y);
-				this.drawMoveStart = [x, y];
-				this.initial_load = false;
-			}
+            this.calculatePinchZoom();
+        }
+        else { // is the user dragging?
+            
+            var x = e.originalEvent.targetTouches[0].pageX;
+			var y = e.originalEvent.targetTouches[0].pageY;
+            
+            this.calculateDragMove(x, y);
 
 		}
 
 
     }
 
+    handleMouseMove(e) {
+        console.log("move event");
+        console.log(e)
+        this.userHasInteracted = true;
+
+        e.preventDefault();
+        
+        var x = e.clientX;
+        var y = e.clientY;
+
+        this.calculateDragMove(x, y);
+    }
+
     handleDown(e) {
+        this.userHasInteracted = true;
         console.log("down event");
+
+        e.preventDefault();
+		
+        // record the x and y coordinates of the click/tap
+        var x, y;
+
+        switch(e.type) {
+            case "touchstart":
+                x = e.originalEvent.targetTouches[0].pageX;
+                y = e.originalEvent.targetTouches[0].pageY;
+                if (e.originalEvent.touches) {
+                    // this is a pinch, not a click or a tap
+                    this.fingers_down = true;				
+                }
+
+                break;
+            case "mousedown":
+            default:
+                x = e.clientX;
+                y = e.clientY;
+        }
+		
+		// if the user is not in draw mode, record the starting position of the drag.
+		this.isDragging = true;
+		this.dragStart = [x, y];
+		this.dragMoveStart = [x, y];
+		// the difference between dragStart and drawMoveStart is that dragStart is calculated and recorded only 
+		// on the down event, while drawMoveStart is recalculated on every move event  
     }
 
     handleUp(e) {
+        this.userHasInteracted = true;
+        this.isDragging = false;
         console.log("up event");
     }
 
     handleOut(e) {
+        this.userHasInteracted = true;
         console.log("out event");
     }
 
     handleScrollWheel(e) {
+        this.userHasInteracted = true;
         console.log("scroll event");
     }
 
@@ -124,21 +221,29 @@ class Zoomer extends Component {
     initializeZoomer() {
         this.originX = 0;
         this.originY = 0;
-        this.mouseX = 0;            //  the initial mouse X coordinate
+        this.mouseX = 0;            // the initial mouse X coordinate
         this.mouseY = 0;            // the initial mouse Y coordinate
+        this.image_left = 0;        // the left position of the drawn image
+        this.image_top = 0;         // the top position of the drawn image
         this.isDragging = false;    // tracks whether the user is current dragging
         this.scale = 1;             // the original scale of the canvas
         this.startX = this.offsetX; // the initial loading position of the canvas contents
 	    this.startY = this.offsetY;
         this.dragStart = [this.startX, this.startY]; // used to calculate how far canvas contents have been dragged, and in what direction
 	    this.dragEnd = [this.startX, this.startY];
-	    this.drawMoveStart = [0,0]; // used to calculate the current position of the drag
+        this.drawMoveStart = [0,0]; // used to calculate the current position of the drag
+        this.userHasInteracted = false; // used to track whether the user has interacted with the canvas
 
         // a few variables to help calculate pinch zoom
-        this.finger_1_start = { x: 0, y: 0 };
-        this.finger_2_start = { x: 0, y: 0 };
-        this.finger_1_end   = { x: 0, y: 0 };
-        this.finger_2_end   = { x: 0, y: 0 };
+        this.finger_1 = {
+            start: { x: 0, y: 0 },
+            end: { x: 0, y: 0 }
+        }
+        this.finger_2 = {
+            start: { x: 0, y: 0 },
+            end: { x: 0, y: 0 }
+        }
+        
         this.fingers_down = false;
 
         // get the offset of the canvas, relative to the viewport
@@ -157,7 +262,7 @@ class Zoomer extends Component {
         this.dragStart = [this.startX, this.startY]; // used to track where the user started dragging
         this.dragEnd = [this.startX, this.startY]; // used to calculate how far canvas contents have been dragged, and in what direction.
 
-
+        console.log("Image")
         this.renderCanvas();
     }
 
@@ -176,22 +281,34 @@ class Zoomer extends Component {
      * Load the image, and then initialize the canvas
      */
     initializeImage() {
-        let image = new Image();
+        this.image = new Image();
         console.log(this.props.image);
-        image.onload = (i) => {
+        this.image.onload = (i) => {
             this.image_width = i.width;
             this.image_height = i.height;
+            console.log(this.image);
             this.initializeCanvas();
         }
-        image.src = this.props.image;
+        this.image.src = this.props.image;
     }
 
     /**
-     * draw the scaled image onto the canvas
+     * draw the image onto the scaled canvas
      */
     renderCanvas() {
+        // clear the canvas before drawing the image
+        this.clearCanvas();
 
-        // this.canvas.drawImage
+        if (!this.canvasIsWiderThanImage()) {
+            if (this.userHasInteracted) { this.image_left = -this.mouseX;}
+            else { this.image_left = (this.canvas.width / 2 - this.image_width / 2)}
+        } else {
+            this.image_left = -this.mouseX + (this.canvas.width / 2 - this.image_width / 2);
+        }
+        
+        this.image_top = -this.mouseY;
+
+        this.context.drawImage(this.image,this.image_left, this.image_top, this.image.width, this.image.height);
 
         requestAnimationFrame(() => {
             this.renderCanvas();
