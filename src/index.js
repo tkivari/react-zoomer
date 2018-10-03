@@ -1,10 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Zoomer from './lib/zoomer';
+import './index.css';
 
 let settings = {
-    background_color: "#eee"
-};
+    background_color: "#eee",
+    width: "100%",
+    height: "500px",
+    minZoom: 0.5 // set minimum zoom to  50% of original size
+ };
 
 ReactDOM.render(
 (
