@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Zoomer from './lib/zoomer';
+import Zoomer from './lib';
 import './index.css';
 
 let settings = {
