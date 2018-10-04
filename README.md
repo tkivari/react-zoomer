@@ -22,7 +22,10 @@ let settings = {
 ReactDOM.render(
     (
         <div className="zoomer-demo">
-            <Zoomer image="https://d3bx4ud3idzsqf.cloudfront.net/public/production/7386/68915_high_res_1536869974.jpg" settings={settings} />
+            <Zoomer
+              image="https://d3bx4ud3idzsqf.cloudfront.net/public/production/7386/68915_high_res_1536869974.jpg"
+              settings={settings} 
+            />
         </div>
     ), document.getElementById("root")
 );
