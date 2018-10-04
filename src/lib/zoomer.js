@@ -23,40 +23,22 @@ class Zoomer extends Component {
             width: this.settings.width,
             height: this.settings.height
         }
+
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleOut = this.handleOut.bind(this);
+        this.handleDown = this.handleDown.bind(this);
+        this.handleTouchMove = this.handleTouchMove.bind(this);
+        this.handleScrollWheel = this.handleScrollWheel.bind(this);
+        this.handleUp = this.handleUp.bind(this);
+        this.handleScrollWheel = this.handleScrollWheel.bind(this);
         
     }
 
     /**
      * Bind even listeners for relevant user-initiated events
-     * - Refactor this later to use React best practices for event binding, 
-     * eg: onMouseMove={this.handleMouseMove}
      */
     bindEventListeners() {
-        this.canvas.addEventListener("mousemove", (e) => {
-            this.handleMouseMove(e);
-        })
-        this.canvas.addEventListener("touchmove", (e) => {
-            this.handleTouchMove(e);
-        })
-
-        this.canvas.addEventListener("mousedown", (e) => {
-            this.handleDown(e);
-        })
-        this.canvas.addEventListener("touchstart", (e) => {
-            this.handleDown(e);
-        })
-        this.canvas.addEventListener("mouseup", (e) => {
-            this.handleUp(e);
-        })
-        this.canvas.addEventListener("touchend", (e) => {
-            this.handleUp(e);
-        })
-        this.canvas.addEventListener("touchcancel", (e) => {
-            this.handleUp(e);
-        })
-        this.canvas.addEventListener("mouseout", (e) => {
-            this.handleOut(e);
-        })
+        // the mouse wheel event must be bound through vanilla JS as the react synthetic onWheel event doesn't seem to work.
         this.canvas.onmousewheel = (e) => {
             this.handleScrollWheel(e)
         }
@@ -76,11 +58,13 @@ class Zoomer extends Component {
         let mouseX = Math.round(this.startX + (this.dragStart[0] - this.dragEnd[0])/this.scale);
         let mouseY = Math.round(this.startY + (this.dragStart[1] - this.dragEnd[1])/this.scale);
         
+        // Known issue:  Currently, the user can drag the image off of the canvas and out of view,
+        // and keep on dragging forever.  In a future version, I would like to figure out how 
+        // to prevent them from doing so.
+        
         // if (mouseX < -this.originX - this.canvas.width/this.scale / 2) {
         //     mouseX = -this.originX - this.canvas.width/this.scale / 2;
         // }
-
-        console.log(mouseX);
 
         // if (mouseX < -1*((this.image.width / this.scale) / 2)) {
         //     mouseX = -1*((this.image.width / this.scale) / 2);
@@ -90,25 +74,21 @@ class Zoomer extends Component {
         //     mouseX = (this.image.width / this.scale) / 2;
         // }
         
-        // if (mouseX > -this.originX + (this.image_width - this.canvas.width/this.scale / 2)) {
-        //     mouseX = -this.originX + (this.image_width - this.canvas.width/this.scale / 2);
+        // if (mouseX > -this.originX + (this.image.width - this.canvas.width/this.scale / 2)) {
+        //     mouseX = -this.originX + (this.image.width - this.canvas.width/this.scale / 2);
         // }
         
         // if (mouseY < -this.originY) {
         //     mouseY = -this.originY;
         // }
         
-        // if (mouseY > -this.originY + this.image_height - this.canvas.height / this.scale) {
-        //     mouseY = -this.originY + this.image_height - this.canvas.height / this.scale;
+        // if (mouseY > -this.originY + this.image.height - this.canvas.height / this.scale) {
+        //     mouseY = -this.originY + this.image.height - this.canvas.height / this.scale;
         // }
         
         this.mouseX = mouseX;
         this.mouseY = mouseY;
         
-        if (this.zoomed) {
-            this.zoomed = false;
-        }
-
     }
 
     calculatePinchZoom() {
@@ -122,7 +102,6 @@ class Zoomer extends Component {
 		    
 		    if ((new_scale > this.scale && new_scale < this.settings.maxZoom) || (new_scale < this.scale && new_scale > this.settings.minZoom)) { 
   			
-		    	this.zoomed = true;
 	  			let focal_point = {
 	  				x: (this.finger_1.start.x + this.finger_2.start.x) / 2, 
 	  				y: (this.finger_1.start.y + this.finger_2.start.y) / 2 
@@ -146,7 +125,7 @@ class Zoomer extends Component {
     }
 
     canvasIsWiderThanImage() {
-        return this.canvas.width > this.image_width;
+        return this.canvas.width > this.image.width;
     }
 
     /**
@@ -162,11 +141,9 @@ class Zoomer extends Component {
     }
 
     handleTouchMove(e) {
-        console.log("move event");
-        console.log(e)
-        this.userHasInteracted = true;
-
         e.preventDefault();
+        e.stopPropagation();
+        this.userHasInteracted = true;
 
         // is the user zooming? If there are 2 fingers/touch points on the screen, this is a pinch zoom
         if (e.touches && e.touches.length === 2) {
@@ -201,12 +178,11 @@ class Zoomer extends Component {
     }
 
     handleMouseMove(e) {
-        console.log("move event");
-        console.log(e)
         this.userHasInteracted = true;
 
         e.preventDefault();
-        
+        e.stopPropagation();
+
         let x = e.clientX;
         let y = e.clientY;
 
@@ -214,10 +190,8 @@ class Zoomer extends Component {
     }
 
     handleDown(e) {
-        this.userHasInteracted = true;
-        console.log("down event", e);
-
         e.preventDefault();
+        this.userHasInteracted = true;
 		
         // record the x and y coordinates of the click/tap
         let x, y;
@@ -239,12 +213,9 @@ class Zoomer extends Component {
         }
 		
 		// if the user is not in draw mode, record the starting position of the drag.
-        console.warn("x:y", x, y);
         this.isDragging = true;
 		this.dragStart = [x, y];
 		this.dragMoveStart = [x, y];
-		// the difference between dragStart and drawMoveStart is that dragStart is calculated and recorded only 
-		// on the down event, while drawMoveStart is recalculated on every move event  
     }
 
     handleUp(e) {
@@ -253,14 +224,12 @@ class Zoomer extends Component {
         this.userHasInteracted = true;
         this.isDragging = false;
         this.resetCanvasContentCoords(this.mouseX, this.mouseY);
-        console.log("up event");
     }
 
     handleOut(e) {
         this.userHasInteracted = true;
         this.isDragging = false;
         this.resetCanvasContentCoords(this.mouseX, this.mouseY);
-        console.log("out event");
     }
 
     handleScrollWheel(e) {
@@ -274,16 +243,12 @@ class Zoomer extends Component {
         let wheel = e.wheelDelta/120;
 
         this.ratio = Math.exp(wheel*this.zoomIntensity);
-        console.log(wheel, this.ratio)
         let new_scale = this.scale * this.ratio;
 
         if ((new_scale > this.scale && new_scale < this.settings.maxZoom) || (new_scale < this.scale && new_scale > this.settings.minZoom)) { 
         
-            console.log(new_scale);
             let originx = mx/(this.scale*this.ratio) - mx/this.scale;
             let originy = my/(this.scale*this.ratio) - my/this.scale;
-            
-            this.zoomed = true;
             
             // Translate so the visible origin is at the context's origin.
             this.translate(this.originX, this.originY);
@@ -302,10 +267,36 @@ class Zoomer extends Component {
             this.initial_load = false;
             
         }
-		    
-		
+    }
 
-        console.log("scroll event");
+    /**
+     * Get a reference to the canvas/context, and bind event listeners
+     */
+    initializeCanvas() {
+        this.canvas = document.querySelector("#zoomer-canvas")
+        let parent_width = this.canvas.parentElement.getBoundingClientRect().width;
+        this.canvas.style.width = parent_width + "px";
+        this.canvas.setAttribute("width", parseInt(parent_width));
+
+        let parent_height = this.canvas.parentElement.getBoundingClientRect().height;
+        this.canvas.style.height = parent_height+"px";
+        this.canvas.setAttribute("height", parseInt(parent_height));
+
+        this.context = this.canvas.getContext("2d");
+        
+        this.bindEventListeners();
+        this.initializeZoomer();
+    }
+
+    /**
+     * Load the image, and then initialize the canvas
+     */
+    initializeImage() {
+        this.image = new Image();
+        this.image.onload = (i) => {
+            this.initializeCanvas();
+        }
+        this.image.src = this.props.image;
     }
 
     /**
@@ -313,20 +304,15 @@ class Zoomer extends Component {
      */
     initializeZoomer() {
         this.canvasRect = this.canvas.getBoundingClientRect();
-        this.originX = 0;
-        this.originY = 0;
+        this.originX = 0;           // the X origin of the canvas
+        this.originY = 0;           // the Y origin of the canvas
         this.image_left = 0;        // the left position of the drawn image
         this.image_top = 0;         // the top position of the drawn image
         this.isDragging = false;    // tracks whether the user is current dragging
         this.scale = 1;             // the original scale of the canvas
         this.userHasInteracted = false; // used to track whether the user has interacted with the canvas
 
-        this.translateTracker = {
-            x: 0,
-            y: 0
-        };
-
-
+        
         // a few variables to help calculate pinch zoom
         this.finger_1 = {
             start: { x: 0, y: 0 },
@@ -337,10 +323,9 @@ class Zoomer extends Component {
             end: { x: 0, y: 0 }
         }
         
-        this.fingers_down = false;
+        this.fingers_down = false; // the user has not put their fingers down yet
 
         // get the offset of the canvas, relative to the viewport
-        
         this.offset = {
             left: this.canvasRect.left,
             top: this.canvasRect.top
@@ -364,55 +349,14 @@ class Zoomer extends Component {
     }
 
     /**
-     * Get a reference to the canvas/context, and bind event listeners
-     */
-    initializeCanvas() {
-        this.canvas = document.querySelector("#zoomer-canvas")
-        let parent_width = this.canvas.parentElement.getBoundingClientRect().width;
-        console.warn(parent_width);
-        this.canvas.style.width = parent_width + "px";
-        this.canvas.setAttribute("width", parseInt(parent_width));
-
-        let parent_height = this.canvas.parentElement.getBoundingClientRect().height;
-        this.canvas.style.height = parent_height+"px";
-        this.canvas.setAttribute("height", parseInt(parent_height));
-
-        this.context = this.canvas.getContext("2d");
-        
-        this.bindEventListeners();
-        this.initializeZoomer();
-    }
-
-    /**
-     * Load the image, and then initialize the canvas
-     */
-    initializeImage() {
-        this.image = new Image();
-        console.log(this.props.image);
-        this.image.onload = (i) => {
-            this.image_width = i.width;
-            this.image_height = i.height;
-            console.log(this.image);
-            this.initializeCanvas();
-        }
-        this.image.src = this.props.image;
-    }
-
-    /**
      * draw the image onto the scaled canvas
      */
     renderCanvas() {
         // clear the canvas before drawing the image
         this.clearCanvas();
 
-        if (!this.canvasIsWiderThanImage()) {
-            if (this.userHasInteracted) { this.image_left = -this.mouseX;}
-            else { this.image_left = (this.canvas.width / 2 - this.image_width / 2)}
-        } else {
-            this.image_left = -this.mouseX + (this.canvas.width / 2 - this.image_width / 2) + this.offset.left;
-        }
-        
-        this.image_top = -this.mouseY + this.offset.top;
+        this.image_left = -this.mouseX + (this.canvas.width / 2 - this.image.width / 2) + this.offset.left;
+        this.image_top = -this.mouseY + (this.canvas.height / 2 - this.image.height / 2) + this.offset.top;
 
         this.context.drawImage(this.image,this.image_left, this.image_top, this.image.width, this.image.height);
 
@@ -421,10 +365,22 @@ class Zoomer extends Component {
         });
     }
 
+    /**
+     * render the component JSX
+     */
     render() {
         return (
             <div className="zoomer-container" style={this.zoomerStyle}>
-                <canvas id="zoomer-canvas"></canvas>
+                <canvas id="zoomer-canvas" 
+                    onMouseMove={this.handleMouseMove} 
+                    onTouchMove={this.handleTouchMove}
+                    onMouseDown={this.handleDown}
+                    onTouchStart={this.handleDown}
+                    onMouseUp={this.handleUp}
+                    onTouchEnd={this.handleUp}
+                    onTouchCancel={this.handleUp}
+                    onMouseOut={this.handleOut}
+                ></canvas>
             </div>
         )
     }
@@ -441,10 +397,13 @@ class Zoomer extends Component {
 		this.startY = clientY;
     }
     
+    /**
+     * 
+     * @param int x 
+     * @param int y 
+     */
     translate(x,y) {
-	    this.translateTracker.x += x/this.scale;
-	    this.translateTracker.y += y/this.scale;
-		this.context.translate(x,y);
+	    this.context.translate(x,y);
 	}
 
 }
