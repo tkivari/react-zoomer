@@ -91,6 +91,9 @@ class Zoomer extends Component {
         
     }
 
+    /**
+     * calculate the new scale and positioning of the image based on the amount of pinching
+     */
     calculatePinchZoom() {
         let distance_1 = Math.sqrt(Math.pow(this.finger_1.start.x - this.finger_2.start.x, 2) + Math.pow(this.finger_1.start.y - this.finger_2.start.y, 2));
 		let distance_2 = Math.sqrt(Math.pow(this.finger_1.end.x - this.finger_2.end.x, 2) + Math.pow(this.finger_1.end.y - this.finger_2.end.y, 2));
@@ -122,10 +125,6 @@ class Zoomer extends Component {
   			
 		    }
 		}
-    }
-
-    canvasIsWiderThanImage() {
-        return this.canvas.width > this.image.width;
     }
 
     /**
