@@ -54,6 +54,18 @@ class Zoomer extends Component {
         this.canvas.onmousewheel = (e) => {
             this.handleScrollWheel(e)
         }
+
+        // prevent Safari on iOS from ignoring the user-scalable=0 in the viewport meta tag
+        this.canvas.ongesturestart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // prevent IE / Edge from ignoring the user-scalable=0 in the viewport meta tag
+        this.canvas.onmsgesturestart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }
     }
 
     calculateDragMove(x, y) {
@@ -151,6 +163,10 @@ class Zoomer extends Component {
         this.initializeImage();
     }
 
+    handleGestureStart(e) {
+        e.preventDefault();
+    }
+
     handleTouchMove(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -202,6 +218,7 @@ class Zoomer extends Component {
 
     handleDown(e) {
         e.preventDefault();
+        e.stopPropagation();
         this.userHasInteracted = true;
 		
         // record the x and y coordinates of the click/tap
@@ -231,6 +248,7 @@ class Zoomer extends Component {
 
     handleUp(e) {
         e.preventDefault();
+        e.stopPropagation();
         this.origin = null;
         this.userHasInteracted = true;
         this.isDragging = false;
@@ -238,6 +256,8 @@ class Zoomer extends Component {
     }
 
     handleOut(e) {
+        e.preventDefault();
+        e.stopPropagation();
         this.userHasInteracted = true;
         this.isDragging = false;
         this.resetCanvasContentCoords(this.mouseX, this.mouseY);
@@ -245,6 +265,7 @@ class Zoomer extends Component {
 
     handleScrollWheel(e) {
         e.preventDefault();
+        e.stopPropagation();
         this.userHasInteracted = true;
 
         // Get mouse offset
