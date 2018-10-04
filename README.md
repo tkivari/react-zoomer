@@ -47,4 +47,4 @@ settings: an object containing any of the following keys:
 
 The code for this package can be found at https://github.com/tkivari/react-zoomer
 
-A working demo can be found at [Tyler Kivari's](https://tyler.digital).
+A working demo can be found at https://tyler.digital
