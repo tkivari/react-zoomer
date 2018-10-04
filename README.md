@@ -24,7 +24,7 @@ The zoomable component has only a few settings and props and is easily added int
 ```
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Zoomer from './lib/zoomer';
+import Zoomer from 'react-zoomer';
 import './index.css';
 
 let settings = {
