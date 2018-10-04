@@ -7,6 +7,18 @@ class Zoomer extends Component {
 
         this.image = null;  // the image DOM element
 
+        if (this.props.settings.hasOwnProperty("minZoom")) {
+            if (this.props.settings.minZoom < 0.1 || this.props.minZoom > 1) {
+                console.error("minZoom setting must be a number between 0.1 and 1");
+            }
+        }
+
+        if (this.props.settings.hasOwnProperty("maxZoom")) {
+            if (this.props.settings.maxZoom < 1) {
+                console.error("maxZoom setting must be a number greater than 1");
+            }
+        }
+
         // User defineable settings- these can be passed in via component props
         let defaultSettings = {
             backgroundColor: "#ccc", // the background color of the canvas
