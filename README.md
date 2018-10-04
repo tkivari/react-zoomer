@@ -1,6 +1,10 @@
 ## React Zoomer
 
-This package provides a React component that takes an image URL as a prop and loads it into a canvas. The user can zoom via mouse wheel on desktop or pinch-zoom on a mobile device.  
+This package provides a React component that takes an image URL as a prop and loads it into a canvas. The user can pan and zoom via mouse wheel on desktop or pinch-zoom on a mobile device.  
+
+## Live Demo
+
+A working demo can be found at https://tyler.digital/demo/react-zoomer
 
 ## Installation
 
@@ -66,5 +70,3 @@ settings: an object containing any of the following keys:
 ## More information
 
 The code for this package can be found at https://github.com/tkivari/react-zoomer
-
-A working demo can be found at https://tyler.digital
