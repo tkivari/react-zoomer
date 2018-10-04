@@ -2,6 +2,12 @@
 
 This package provides a React component that takes an image URL as a prop and loads it into a canvas. The user can zoom via mouse wheel on desktop or pinch-zoom on a mobile device.  
 
+## Installation
+
+```
+npm i --save react-zoomer 
+```
+
 ## Usage
 
 the zoomable component has only a few settings and props and is easily added into any React application:
