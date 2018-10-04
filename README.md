@@ -10,7 +10,16 @@ npm i --save react-zoomer
 
 ## Usage
 
-the zoomable component has only a few settings and props and is easily added into any React application:
+First, you must change the "viewport" meta tag in your projects index.html file to the following:
+
+```
+<meta 
+    name='viewport' 
+    content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' 
+/>
+```
+
+The zoomable component has only a few settings and props and is easily added into any React application:
 
 ```
 import React from 'react';
@@ -48,6 +57,11 @@ settings: an object containing any of the following keys:
   - minZoom: a number between 0.1 and 1, sets the minimum zoom.  This is the furthest a user will be able to zoom out of the image. 
   - maxZoom: a number greater than 1, the maximum a user will be able to zoom into the image.
 ```
+
+## Known issues
+
+1. In iOS Safari 10+, when the total page height/width is greater than the canvas height/width, dragging on the canvas can cause the page to scroll.
+ 
 
 ## More information
 
